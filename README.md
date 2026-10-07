@@ -34,6 +34,12 @@ napi prepublish -t npm  # 发平台包(optionalDependencies 形态)
 
 MSRV: rustc 1.89+(whois-rust 3.1.0 的 MSRV;CI 固定 1.89.0)。
 
+napi CLI 3.x 产物名坑(2026-10-08 CI 实证):`napi build --target X` 产物恒为裸
+`whois-binding.node`(加载器与 `napi artifacts` 只认平台限定名)——CI 每腿 build 后
+按 abi 改名;`napi artifacts` 要求 artifacts/ 下全目标限定名在场,download-artifact
+禁 merge-multiple(裸名六腿相撞);aarch64-gnu 交叉需显式
+`CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER=aarch64-linux-gnu-gcc`。
+
 ## 实测(2026-10-07)
 
 - pi-server(SG):d3fend.cn 381B(Registration data)、IP 1.1.1.1 3017B(arin)、example.com 233B(iana)✓
