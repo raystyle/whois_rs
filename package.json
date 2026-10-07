@@ -6,7 +6,12 @@
   "types": "index.d.ts",
   "license": "Apache-2.0",
   "repository": "https://github.com/raystyle/whois_rs",
-  "files": ["index.js", "index.d.ts", "servers.json", "README.md"],
+  "files": [
+    "index.js",
+    "index.d.ts",
+    "servers.json",
+    "README.md"
+  ],
   "napi": {
     "binaryName": "whois-binding",
     "targets": [
@@ -26,5 +31,6 @@
     "build:debug": "napi build --platform",
     "artifacts": "napi artifacts",
     "prepublishOnly": "napi prepublish -t npm"
-  }
+  },
+  "private": true
 }

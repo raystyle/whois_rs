@@ -5,11 +5,11 @@ name: CI
 #   - napi artifacts 要 artifacts/ 下全目标限定名 .node(缺一即炸),
 #     download-artifact 不得 merge-multiple(裸名六腿相撞)
 #   - aarch64-gnu 交叉需显式 linker env(host ld 咬 aarch64 目标件)
+# 发布口径:不发 npm(用户裁 2026-10-08);构建矩阵只验六平台可编译。
 
 on:
   push:
     branches: [main]
-    tags: ['v*']
   pull_request:
 
 permissions:
@@ -64,30 +64,3 @@ jobs:
         with:
           name: bindings-${{ matrix.target }}
           path: whois-binding.*.node
-
-  release:
-    if: startsWith(github.ref, 'refs/tags/v')
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      id-token: write
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          registry-url: https://registry.npmjs.org/
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: bindings-*
-          path: artifacts
-      - run: npm install -g @napi-rs/cli
-      - name: Publish platform packages
-        run: napi artifacts && napi prepublish -t npm
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: Publish root package
-        run: npm publish --provenance --access public
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

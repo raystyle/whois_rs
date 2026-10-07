@@ -47,8 +47,9 @@ napi CLI 3.x 产物名坑(2026-10-08 CI 实证):`napi build --target X` 产物�
 
 ## 分发形态
 
-`package.json` napi.targets 六平台;每个平台一个 `.node` 经 optionalDependencies 分发,
-根包只带 index.js/d.ts/servers.json。
+**不发 npm**(用户裁 2026-10-08,package.json 恒 `private: true` 防误发);CI 六平台
+矩阵只验可编译。消费 = clone 本仓后 `napi build --platform --release` 出本机 `.node`;
+跨平台构件按需 `napi build --target <triple> --release`(产物恒裸名,改名规则见下节坑档)。
 
 ## RDAP 443 备选道(rdap.mjs)
 
