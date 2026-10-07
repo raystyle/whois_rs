@@ -43,3 +43,17 @@ MSRV: rustc 1.89+(whois-rust 3.1.0 的 MSRV;CI 固定 1.89.0)。
 
 `package.json` napi.targets 六平台;每个平台一个 `.node` 经 optionalDependencies 分发,
 根包只带 index.js/d.ts/servers.json。
+
+## RDAP 443 备选道(rdap.mjs)
+
+TCP 43 被拦的网络(本站 wrt tproxy)走 RDAP(HTTPS 443,fetch 原生):
+
+```ts
+import { rdapLookup, rdapSummary } from "./rdap.mjs";
+const j = await rdapLookup("example.com");  // 原始 RDAP JSON
+const s = rdapSummary(j);                    // 结构化:registrar/createdAt/expiresAt/status/nameservers
+```
+
+- IANA bootstrap 发现注册局(data.iana.org/rdap/dns.json,缓存 24h)
+- **覆盖缺口**:.cn 等部分 TLD 无 RDAP 服务(报错明示,应转 whois 直查道)
+- 实测:example.com 全字段绿(本站 443 道畅通)
