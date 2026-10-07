@@ -1,0 +1,45 @@
+# whois_rs — WHOIS 绑定(napi-rs)
+
+WHOIS over TCP 43 的原生 Node 模块:Rust 内核(whois-rust 3.1.0),TypeScript 只见
+`lookup(query: string): Promise<string>`。
+
+## 架构
+
+- **AsyncTask 而非 async fn**:同步 lookup 是阻塞 TCP,工作丢 libuv 线程池
+  (不用 napi async fn 套 tokio,双运行时打架;用户蓝图裁定)
+- **servers.json 编进二进制**:`include_str!`,安装后无需找文件(node-whois 上游列表)
+- **Lazy 全局 WhoIs 实例**:`once_cell::sync::Lazy`,首次调用初始化
+
+## 用法
+
+```ts
+import { lookup } from "@d3fend/whois-binding";
+const raw = await lookup("d3fend.cn"); // 原始 whois 文本
+```
+
+调用方注意:
+- **并发限制**:libuv 默认线程池 4,批量 WHOIS 会占满池;JS 侧信号量(≤8)自制
+- **缓存自制**:返回值是原始文本;结构化解析留在 TS 侧
+- **网络前提**:TCP 43 出站可达(wrt tproxy 会拦 43 口,经 pi-server/云侧道可达)
+- **Edge/浏览器不适用**:无 TCP 43,走 RDAP fetch
+
+## 构建
+
+```bash
+napi build --platform --release   # 本机
+napi build --target x86_64-unknown-linux-musl --release  # 交叉目标
+napi artifacts   # 收 .node
+napi prepublish -t npm  # 发平台包(optionalDependencies 形态)
+```
+
+MSRV: rustc 1.89+(whois-rust 3.1.0 的 MSRV;CI 固定 1.89.0)。
+
+## 实测(2026-10-07)
+
+- pi-server(SG):d3fend.cn 381B(Registration data)、IP 1.1.1.1 3017B(arin)、example.com 233B(iana)✓
+- 本站(wrt tproxy 后):TCP 43 被拦(os error 11 EAGAIN)→ 经 mesh 云侧道跑
+
+## 分发形态
+
+`package.json` napi.targets 六平台;每个平台一个 `.node` 经 optionalDependencies 分发,
+根包只带 index.js/d.ts/servers.json。

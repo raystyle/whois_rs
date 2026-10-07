@@ -1,0 +1,30 @@
+{
+  "name": "@d3fend/whois-binding",
+  "version": "0.1.0",
+  "description": "WHOIS over TCP 43 as a native napi-rs module - TS sees Promise<string> (whois-rust 3.1.0 inside)",
+  "main": "index.js",
+  "types": "index.d.ts",
+  "license": "Apache-2.0",
+  "repository": "https://github.com/raystyle/whois_rs",
+  "files": ["index.js", "index.d.ts", "servers.json", "README.md"],
+  "napi": {
+    "binaryName": "whois-binding",
+    "targets": [
+      "aarch64-apple-darwin",
+      "x86_64-apple-darwin",
+      "x86_64-unknown-linux-gnu",
+      "aarch64-unknown-linux-gnu",
+      "x86_64-unknown-linux-musl",
+      "x86_64-pc-windows-msvc"
+    ]
+  },
+  "engines": {
+    "node": ">=20.17"
+  },
+  "scripts": {
+    "build": "napi build --platform --release",
+    "build:debug": "napi build --platform",
+    "artifacts": "napi artifacts",
+    "prepublishOnly": "napi prepublish -t npm"
+  }
+}

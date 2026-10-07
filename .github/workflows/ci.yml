@@ -1,0 +1,82 @@
+name: CI
+# napi-rs 多平台构建:每 target 一次 napi build --release,artifacts 收 .node,
+# pre-publish 发平台包(optionalDependencies),最后根包。流程锚 napi.rs/docs/deep-dive/release。
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        targets:
+          - aarch64-apple-darwin
+          - x86_64-apple-darwin
+          - x86_64-unknown-linux-gnu
+          - aarch64-unknown-linux-gnu
+          - x86_64-unknown-linux-musl
+          - x86_64-pc-windows-msvc
+    runs-on: ${{ contains(matrix.targets, 'apple') && 'macos-latest' || (contains(matrix.targets, 'windows') && 'windows-latest' || 'ubuntu-latest') }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: 1.89.0
+          targets: ${{ matrix.targets }}
+      - name: Install cross toolchain (linux non-x86_64)
+        if: matrix.targets == 'aarch64-unknown-linux-gnu' || matrix.targets == 'x86_64-unknown-linux-musl'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gcc-aarch64-linux-gnu musl-tools
+      - uses: swatinem/rust-cache@v2
+      - run: npm install -g @napi-rs/cli
+      - name: Build
+        run: napi build --target ${{ matrix.targets }} --release
+      - name: Smoke (host platform only)
+        if: matrix.targets == 'x86_64-unknown-linux-gnu'
+        run: node -e "const m = require('./index.js'); m.lookup('iana.org').then(r => console.log('whois LEN=' + r.length), e => { console.error('FAIL', e.message ?? e); process.exit(1); })"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: node-${{ matrix.targets }}
+          path: |
+            *.node
+            index.js
+            index.d.ts
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          registry-url: https://registry.npmjs.org/
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: node-*
+          merge-multiple: true
+          path: .
+      - run: npm install -g @napi-rs/cli
+      - name: Publish platform packages
+        run: napi artifacts && napi prepublish -t npm
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Publish root package
+        run: npm publish --provenance --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
