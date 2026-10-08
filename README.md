@@ -63,4 +63,6 @@ const s = rdapSummary(j);                    // 结构化:registrar/createdAt/ex
 
 - IANA bootstrap 发现注册局(data.iana.org/rdap/dns.json,缓存 24h)
 - **覆盖缺口**:.cn 等部分 TLD 无 RDAP 服务(报错明示,应转 whois 直查道)
+- **IP 双道**(2026-10-08 补):IP 查询走 ipv4.json/ipv6.json bootstrap(CIDR 最长前缀匹配),
+  `/ip/<addr>` 路径;此前误用域名道报「无 RDAP」。APNIC 应答例:39.106.105.100 = ALISOFT/CN
 - 实测:example.com 全字段绿(本站 443 道畅通)
